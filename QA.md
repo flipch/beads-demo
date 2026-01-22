@@ -333,7 +333,35 @@ You can audit the source: https://github.com/steveyegge/beads
 
 ## Edge Cases and Failure Modes
 
-### Q30: What happens when the accumulated beads exceed the model's context window - which memories get dropped?
+### Q30: A task is taking too long and context is about to compact. How does Beads help?
+
+**Honest answer: Beads doesn't solve this automatically.**
+
+**What Beads does:**
+- The issue stays marked `in_progress`
+- After compaction, agent can see "I was working on bd-xyz"
+- Context about *what* the task is survives
+
+**What Beads doesn't do:**
+- Monitor context usage
+- Auto-spawn new instances
+- Break down tasks mid-flight
+- Checkpoint progress within a task
+
+**The gap:** If Claude is 70% through a task and context compacts, that 70% progress is lost. The bead just says "align homepage to Figma" — not "I already fixed the header and nav, still need footer."
+
+**How to mitigate:**
+
+1. **Task granularity** — Break big tasks into smaller beads upfront
+2. **Agent instructions** — Tell agents: "If a task is taking many iterations, break it into sub-tasks"
+3. **Progress checkpointing** — Agent can update the issue description with progress notes
+4. **Human oversight** — Check in on long-running tasks (`bd list --status=in_progress`)
+
+**Bottom line:** Beads solves "what was I working on" — not "save my mid-task progress." That requires discipline (smaller tasks) or tooling that doesn't exist yet.
+
+---
+
+### Q31: What happens when the accumulated beads exceed the model's context window - which memories get dropped?
 
 Beads are **queried, not loaded in full**.
 
