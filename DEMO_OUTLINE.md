@@ -184,9 +184,12 @@ Agents use Beads.
    - Context header displays automatically
    - BLOCKS relationships visible
    - Autonomous fetching and research
-7. **We're going to skip forward** (pretend)
-   - Pretend it's over and we have an output
-   - You now close the loop -> bd close beads-ID -> bd sync --flush-only
+
+7. **Skip forward with pre-cooked result**
+   - "Rather than wait, let me show you what this looks like when done"
+   - Switch to a terminal with completed output (pre-run)
+   - Show the generated artifact (research doc, code, etc.)
+   - Close the loop: `bd close <id>` → show it move in bv (`r` to refresh)
 
 ### Key Takeaway
 
@@ -194,73 +197,132 @@ Agents use Beads.
 
 ---
 
+## Interlude: The Claude Plugin
+
+**LIVE DEMO:**
+
+1. Open a fresh Claude Code terminal in the beads-demo project
+2. Press `Ctrl+O` to expand and show the session context
+3. Point out the injected beads context
+
+**TALK ABOUT (while showing):**
+- "See this? I didn't type anything. The plugin injected this."
+- "SessionStart hook runs `bd prime` automatically"
+- "Shows ready tasks, blocked items, workflow instructions"
+- "PreCompact hook preserves this when context gets compressed"
+- "This is why agents 'just know' about beads—zero prompting needed"
+
+**Setup:** `bd setup claude` (installs the hooks)
+
+---
+
 ## Part 2: Agent-Driven Beads
 
-**Goal**: Show the real power - agents managing beads autonomously, visualized in real-time.
+**Goal**: Show the real power - agents managing beads autonomously, with audience participation.
 
 ### Setup (Before Demo)
 
 ```bash
-# Install beads-ui (if not already)
-npm i beads-ui -g
-
-# In your project directory, start the UI
-bdui start --open
+# Install bv (beads_viewer) if not already
+brew install dicklesworthstone/tap/bv
 ```
-
-This opens a local web interface with:
-- **Kanban board** — Blocked, Ready, In Progress, Closed columns
-- **Real-time sync** — Tasks appear as they're created
-- **Epics view** — Progress tracking
 
 ### Screen Layout
 
 ```
 ┌─────────────────────────────────┬─────────────────────────────────┐
 │                                 │                                 │
-│      Claude Code Terminal       │        beads-ui (Browser)       │
+│      Claude Code Terminal       │      bv (Terminal UI)           │
 │                                 │                                 │
-│   Agent creating tasks...       │   Kanban board updating live    │
+│   Agent interviewing you...     │   Kanban/tree/graph view        │
 │                                 │                                 │
 └─────────────────────────────────┴─────────────────────────────────┘
 ```
 
-### Live Demo: F1 Blog
+**bv features to show:**
+- `k` — Kanban board view
+- `t` — Tree view (hierarchy)
+- `g` — Dependency graph
+- `j/k` — Vim-style navigation
+- `/` — Fuzzy search
+
+### The Hook
+
+> "We're building a blog about Formula 1, including a section on the **top 3 drivers of all time**."
+
+### Audience Poll
+
+> "Do you want to get interviewed... or should we let Claude decide who the GOAT drivers are?"
+
+**Option A: Interview** — Claude asks YOU who the top 3 are (prepare for debate)
+**Option B: Autopilot** — Claude decides... let's see if you agree
+
+---
+
+### Option A: The Interview
+
+**Step 1: Fresh start**
+```bash
+cd `mktemp -d`
+git init --quiet
+bd init --quiet
+```
+
+**Step 2: Create the epic**
+```bash
+bd create --type=epic --quiet --title="Build an F1 blog featuring the top 3 drivers of all time"
+```
+
+**Step 3: Create interview prompt**
+```bash
+echo "Interview me about this epic to make a simple PRD. Use bd command to load it. ultrathink and use AskUserQuestion for a few rounds. When you are done, create a prd.md, and use the bd command to decompose it into epics/features/tasks" > interview.md
+```
+
+**Step 4: Launch Claude with limited tools**
+```bash
+cat interview.md | claude --allowedTools "AskUserQuestion,Bash(bd:*)"
+```
+
+**The Interview (~3-4 min):**
+Claude asks questions, audience shouts answers. Their input becomes the PRD.
+
+---
+
+### Option B: Autopilot
 
 **The prompt:**
-
 ```
-Design me a blog about Formula 1.
+Design me a blog about Formula 1, featuring a section on the top 3 greatest drivers of all time.
 
 First, output a PRD (Product Requirements Document).
 From this PRD, create different beads tasks for the different things that need to be completed.
 ```
 
-### What to Watch For
+Claude decides everything—including who the GOATs are. Let's see if you agree.
 
-1. **PRD Generation** — Claude produces structured requirements
-2. **Tasks Appearing** — Watch the Kanban board populate in real-time
-3. **Dependency Wiring** — Blocked tasks appear in "Blocked" column
-4. **Ready State** — Independent tasks land in "Ready" column
+---
 
-### The Visual Payoff
+### The Payoff (Either Option)
 
-As Claude works, the audience sees:
-- Empty board → Tasks appearing one by one
-- Some tasks in "Ready" (can start now)
-- Some tasks in "Blocked" (waiting on dependencies)
-- Epic progress bars filling in
+After Claude finishes:
 
-**No terminal output to parse. Just a live dashboard.**
-
-### Optional: Show Task Movement
-
-If time permits, have Claude start working on a task:
-```
-Work on the first ready task.
+```bash
+bd list --tree
 ```
 
-Watch it move: **Ready → In Progress → Closed**
+**In bv (second terminal):**
+- Press `r` to refresh
+- Press `k` for Kanban view — tasks in Ready/Blocked columns
+- Press `t` for Tree view — epic/feature/task hierarchy
+- Press `g` for Graph view — dependency visualization
+
+### What the Audience Sees
+
+- Empty project → Fully structured task breakdown
+- Epics/features/tasks with dependencies
+- (If interview) Their input reflected in the PRD and task titles
+
+**They just watched Claude turn a prompt into a project plan.**
 
 ---
 
@@ -305,13 +367,21 @@ Watch it move: **Ready → In Progress → Closed**
 
 ## Demo Checklist
 
+**Setup:**
 - [ ] Terminal with beads-demo directory
 - [ ] `bd list --tree` shows existing issues (or start fresh)
+- [ ] bv installed and working (`bv` in a beads project)
+- [ ] Second terminal ready for bv
+
+**Part 1 (Manual):**
 - [ ] Second terminal ready for parallel Claude session
-- [ ] beads-ui running (`bdui start --open`)
-- [ ] Browser window with Kanban board visible
-- [ ] Screen split: Claude terminal + beads-ui side by side
-- [ ] F1 blog prompt ready to paste
+- [ ] Pre-cooked result ready (completed task output to show)
+
+**Part 2 (Agent-Driven):**
+- [ ] Screen split: Claude terminal + bv (second terminal) side by side
+- [ ] bv installed (`brew install dicklesworthstone/tap/bv`)
+- [ ] Commands ready for Option A (interview) and Option B (autopilot)
+- [ ] Know bv keys: `k` (kanban), `t` (tree), `g` (graph), `r` (refresh)
 
 ---
 
@@ -321,8 +391,9 @@ Watch it move: **Ready → In Progress → Closed**
 | --------------------- | -------- |
 | Part 0: What is Beads | 3-4 min  |
 | Part 1: Manual Beads  | 5-7 min  |
+| Interlude: Plugin     | 1 min    |
 | Part 2: Agent-Driven  | 5-7 min  |
 | Best Practices        | 1-2 min  |
 | Q&A                   | flexible |
 
-**Total: ~15-20 minutes**
+**Total: ~17-22 minutes**
